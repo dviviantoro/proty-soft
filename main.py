@@ -26,8 +26,7 @@ def app():
     quarter = cycleMem/4
     numCycle = allMem/cycleMem
 
-    lst = []
-    df = pd.DataFrame(lst)
+    df1 = pd.DataFrame((zip([],[],[])),columns =['deg', 'voltage_mV', 'kind'])
 
     for x in range(1, int(filecouple+1)):
         
