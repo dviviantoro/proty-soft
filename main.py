@@ -217,10 +217,6 @@ def app():
         df = df.drop('charge_pC', axis=1)
         df1 = df
 
-# def show_result(chart, df):
-#     chart = show_chart
-#     df = show_df
-
 def main():
     global voltage,project,device,filecouple,cycle,bgn_pos,bgn_neg,cal_m,cal_b,dl_image,show_image,sine_name,sens_name,my_bar
     st.set_page_config(layout="wide")
@@ -250,7 +246,6 @@ def main():
         cols = st.columns(3)
         static_store = get_static_store()
         uploaded_files = cols[0].file_uploader("Upload .zip file", accept_multiple_files=True)
-        # st.write(uploaded_files)
         if len(uploaded_files) > 0:
             for file in uploaded_files:
                 if file.type == "application/zip":
@@ -263,14 +258,11 @@ def main():
         my_bar = st.progress(0)
         submitted = st.form_submit_button("Submit")
         if submitted:
-            # st.write("uploaded file", uploaded_files)
             app()
-            # show_result()
     
-    if submitted:
-        with open('proty.zip', 'rb') as f:
-            st.download_button('Download Zip', f, file_name='proty.zip')
-            # os.unlink('ready.zip')
+    # if submitted:
+    #     with open('proty.zip', 'rb') as f:
+    #         st.download_button('Download Zip', f, file_name='proty.zip')
 
 
 if __name__ == "__main__":
