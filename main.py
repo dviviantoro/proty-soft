@@ -18,7 +18,6 @@ def get_static_store() -> Dict:
 def app():
     global show_chart, show_df, fig
 
-
     if device == "Micsig":
         allMem = 87500
     elif device == "GWInstek":
@@ -27,16 +26,7 @@ def app():
     quarter = cycleMem/4
     numCycle = allMem/cycleMem
 
-    type_sine = []
-
-    Fs = 360
-    sample = 1000
-    step = 360/sample
-    sine_x = np.arange(start=0, stop=360, step=step)
-    sine_y = 480 * (np.sin(2*np.pi*sine_x/Fs))
-    for element in sine_x:
-        type_sine.append("sine")
-    df1 = pd.DataFrame((zip(sine_x,sine_y,type_sine)),columns =['deg', 'voltage_mV', 'kind'])
+    df1 = []
 
     for x in range(1, int(filecouple+1)):
         
@@ -98,41 +88,6 @@ def app():
         df = pd.concat([df1,df])
         df.reset_index(inplace=True, drop=True)
         
-        charge = df["voltage_mV"].tolist()
-        for element in charge:
-            if element > 0:
-                element = element * cal_m + cal_b
-            else:
-                element = element * cal_m - cal_b
-
-        df_charge = pd.DataFrame(charge, columns =['charge_pC'])
-        df_charge.reset_index(inplace=True, drop=True)
-        df = pd.concat([df, df_charge['charge_pC']], axis=1)
-        print(df)
-        
-        count_series = df.groupby(['deg', 'voltage_mV', 'kind']).size()
-        df3D_mV = count_series.to_frame(name = 'size').reset_index()
-        fig_3D_mV = px.scatter_3d(df3D_mV, x="deg", y="voltage_mV", z="size", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
-        fig_3D_mV.update_traces(marker_size=5)
-
-        count_series = df.groupby(['deg', 'charge_pC', 'kind']).size()
-        df3D_mV = count_series.to_frame(name = 'size').reset_index()
-        fig_3D_pC = px.scatter_3d(df3D_mV, x="deg", y="charge_pC", z="size", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
-        fig_3D_pC.update_traces(marker_size=5)
-
-        dfFilter = df[((df['voltage_mV'] > bgn_pos) & (df['deg'] <= 180) & df['kind'].isin(['sensor']))]
-        nPos = len(dfFilter)
-        nPosCycle = round(nPos/(numCycle),2)
-
-        dfFilter = df[((df['voltage_mV'] < bgn_neg) & (df['deg'] >= 180) & df['kind'].isin(['sensor']))]
-        nNeg = len(dfFilter)
-        nNegCycle = round(nNeg/(numCycle),2)
-
-        fig_mV = px.scatter(df, x="deg", y="voltage_mV", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
-        fig_mV.update_traces(marker_size=5)
-        
-        fig_pC = px.scatter(df, x="deg", y="charge_pC", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
-        fig_pC.update_traces(marker_size=5)
 
         # fig_mV.write_image("output/{}_pic_2d_mV.png".format(x))
         # fig_pC.write_image("output/{}_pic_2d_pC.png".format(x))
@@ -143,6 +98,63 @@ def app():
         # fig_2d_mv_io = io.BytesIO(fig_2d_mV)
 
         if x == filecouple:
+            # generate sine wave
+            type_sine = []
+            Fs = 360
+            sample = 1000
+            step = 360/sample
+            sine_x = np.arange(start=0, stop=360, step=step)
+
+            if dfFilterPos['voltage_mV'].max() > abs(dfFilterNeg['voltage_mV'].min()):
+                max_sine = dfFilterPos['voltage_mV'].max() * 1.4
+            else:
+                max_sine = abs(dfFilterNeg['voltage_mV'].min()) * 1.4
+
+            sine_y = max_sine * (np.sin(2*np.pi*sine_x/Fs))
+            for element in sine_x:
+                type_sine.append("sine")
+            df1 = pd.DataFrame((zip(sine_x,sine_y,type_sine)),columns =['deg', 'voltage_mV', 'kind'])
+
+            df = pd.concat([df1,df])
+            df.reset_index(inplace=True, drop=True)
+
+            # calibration state
+            charge = df["voltage_mV"].tolist()
+            for element in charge:
+                if element > 0:
+                    element = element * cal_m + cal_b
+                else:
+                    element = element * cal_m - cal_b
+
+            df_charge = pd.DataFrame(charge, columns =['charge_pC'])
+            df_charge.reset_index(inplace=True, drop=True)
+            df = pd.concat([df, df_charge['charge_pC']], axis=1)
+            print(df)
+            
+            count_series = df.groupby(['deg', 'voltage_mV', 'kind']).size()
+            df3D_mV = count_series.to_frame(name = 'size').reset_index()
+            fig_3D_mV = px.scatter_3d(df3D_mV, x="deg", y="voltage_mV", z="size", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
+            fig_3D_mV.update_traces(marker_size=5)
+
+            count_series = df.groupby(['deg', 'charge_pC', 'kind']).size()
+            df3D_mV = count_series.to_frame(name = 'size').reset_index()
+            fig_3D_pC = px.scatter_3d(df3D_mV, x="deg", y="charge_pC", z="size", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
+            fig_3D_pC.update_traces(marker_size=5)
+
+            dfFilter = df[((df['voltage_mV'] > bgn_pos) & (df['deg'] <= 180) & df['kind'].isin(['sensor']))]
+            nPos = len(dfFilter)
+            nPosCycle = round(nPos/(numCycle),2)
+
+            dfFilter = df[((df['voltage_mV'] < bgn_neg) & (df['deg'] >= 180) & df['kind'].isin(['sensor']))]
+            nNeg = len(dfFilter)
+            nNegCycle = round(nNeg/(numCycle),2)
+
+            fig_mV = px.scatter(df, x="deg", y="voltage_mV", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
+            fig_mV.update_traces(marker_size=5)
+            
+            fig_pC = px.scatter(df, x="deg", y="charge_pC", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
+            fig_pC.update_traces(marker_size=5)
+
             tab1, tab2, tab3, tab4 = st.tabs(["2D Voltage Unit", "2D Charge Unit", '3D Voltage Unit', '3D Charge Unit'])
             with tab1:
                 st.plotly_chart(fig_mV, use_container_width=True)
@@ -194,27 +206,31 @@ def app():
                     ['skew_neg', dfFilterNeg['voltage_mV'].skew(), 'unit']
                 ]
             
-            filename = "output/0_recap.csv"
-            with open(filename, 'w') as csvfile:
-                csvwriter = csv.writer(csvfile)
-                csvwriter.writerow(fields)
-                csvwriter.writerows(rows)
-            show_df = st.dataframe(pd.read_csv(filename))
-            
-            
-            shutil.make_archive('proty', 'zip', 'output')
-            folder = 'output/'
-            for filename in os.listdir(folder):
-                file_path = os.path.join(folder, filename)
-                try:
-                    if os.path.isfile(file_path) or os.path.islink(file_path):
-                        os.unlink(file_path)
-                    elif os.path.isdir(file_path):
-                        shutil.rmtree(file_path)
-                except Exception as e:
-                    print('Failed to delete %s. Reason: %s' % (file_path, e))
+            csv = df.to_csv(index=False)
+            csv_bytes = csv.encode()
+            csv_io = io.BytesIO(csv_bytes)
 
-        df = df.drop('charge_pC', axis=1)
+            # filename = "output/0_recap.csv"
+            # with open(filename, 'w') as csvfile:
+            #     csvwriter = csv.writer(csvfile)
+            #     csvwriter.writerow(fields)
+            #     csvwriter.writerows(rows)
+            # show_df = st.dataframe(pd.read_csv(filename))
+            
+            
+            # shutil.make_archive('proty', 'zip', 'output')
+            # folder = 'output/'
+            # for filename in os.listdir(folder):
+            #     file_path = os.path.join(folder, filename)
+            #     try:
+            #         if os.path.isfile(file_path) or os.path.islink(file_path):
+            #             os.unlink(file_path)
+            #         elif os.path.isdir(file_path):
+            #             shutil.rmtree(file_path)
+            #     except Exception as e:
+            #         print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+        # df = df.drop('charge_pC', axis=1)
         df1 = df
 
 def main():
