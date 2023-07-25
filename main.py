@@ -7,10 +7,8 @@ import plotly.express as px
 import csv
 import shutil
 import os
-import glob
-import json
+import io
 from PIL import Image
-
 
 @st.cache_data
 def get_static_store() -> Dict:
@@ -93,13 +91,9 @@ def app():
             df['kind'].isin(['sine'])
         ]
 
-        # df = df1.append(df)
         df = pd.concat([df1,df])
         df.reset_index(inplace=True, drop=True)
-        # df['charge_pC'] = df.loc[:, 'voltage_mV']
-        # df['charge_pC'] = df['charge_pC'] * cal_m + cal_b
-
-        # print(df)
+        
         charge = df["voltage_mV"].tolist()
         for element in charge:
             if element > 0:
@@ -116,21 +110,11 @@ def app():
         df3D_mV = count_series.to_frame(name = 'size').reset_index()
         fig_3D_mV = px.scatter_3d(df3D_mV, x="deg", y="voltage_mV", z="size", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
         fig_3D_mV.update_traces(marker_size=5)
-        # fig_3D_mV.update_layout(
-        #     font=dict(
-        #         size=8,
-        #     )
-        # )
-        
+
         count_series = df.groupby(['deg', 'charge_pC', 'kind']).size()
         df3D_mV = count_series.to_frame(name = 'size').reset_index()
         fig_3D_pC = px.scatter_3d(df3D_mV, x="deg", y="charge_pC", z="size", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
         fig_3D_pC.update_traces(marker_size=5)
-        # fig_3D_pC.update_layout(
-        #     font=dict(
-        #         size=8,
-        #     )
-        # )
 
         dfFilter = df[((df['voltage_mV'] > bgn_pos) & (df['deg'] <= 180) & df['kind'].isin(['sensor']))]
         nPos = len(dfFilter)
@@ -142,24 +126,17 @@ def app():
 
         fig_mV = px.scatter(df, x="deg", y="voltage_mV", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
         fig_mV.update_traces(marker_size=5)
-        # fig_mV.update_layout(
-        #     font=dict(
-        #         size=8,
-        #     )
-        # )
         
         fig_pC = px.scatter(df, x="deg", y="charge_pC", color="kind", color_discrete_sequence=["#FC6955", "#3283FE"], height=800, title="{} {} at {} cycles".format(voltage, project, x*cycle))
         fig_pC.update_traces(marker_size=5)
-        # fig_pC.update_layout(
-        #     font=dict(
-        #         size=8,
-        #     )
-        # )
 
-        fig_mV.write_image("output/{}_pic_2d_mV.png".format(x))
-        fig_pC.write_image("output/{}_pic_2d_pC.png".format(x))
-        fig_3D_mV.write_image("output/{}_pic_3d_mV.png".format(x))
-        fig_3D_pC.write_image("output/{}_pic_3d_pC.png".format(x))
+        # fig_mV.write_image("output/{}_pic_2d_mV.png".format(x))
+        # fig_pC.write_image("output/{}_pic_2d_pC.png".format(x))
+        # fig_3D_mV.write_image("output/{}_pic_3d_mV.png".format(x))
+        # fig_3D_pC.write_image("output/{}_pic_3d_pC.png".format(x))
+
+        # fig_2d_mV = fig_mV.to_image(format="jpeg")
+        # fig_2d_mv_io = io.BytesIO(fig_2d_mV)
 
         if x == filecouple:
             tab1, tab2, tab3, tab4 = st.tabs(["2D Voltage Unit", "2D Charge Unit", '3D Voltage Unit', '3D Charge Unit'])
