@@ -18,6 +18,7 @@ def get_static_store() -> Dict:
 def app():
     global show_chart, show_df, fig
 
+
     if device == "Micsig":
         allMem = 87500
     elif device == "GWInstek":
@@ -38,6 +39,9 @@ def app():
     df1 = pd.DataFrame((zip(sine_x,sine_y,type_sine)),columns =['deg', 'voltage_mV', 'kind'])
 
     for x in range(1, int(filecouple+1)):
+        
+        my_bar.progress(value= x/(filecouple))
+        
         print("progress count: ", x)
        
         data_sinus = pd.read_csv("output/{}{}.csv".format(sine_name, x))
@@ -218,7 +222,7 @@ def app():
 #     df = show_df
 
 def main():
-    global voltage,project,device,filecouple,cycle,bgn_pos,bgn_neg,cal_m,cal_b,dl_image,show_image,sine_name,sens_name
+    global voltage,project,device,filecouple,cycle,bgn_pos,bgn_neg,cal_m,cal_b,dl_image,show_image,sine_name,sens_name,my_bar
     st.set_page_config(layout="wide")
 
     left_co1, left_co2, cent_co,last_co, last_co1 = st.columns(5)
@@ -256,6 +260,7 @@ def main():
         sine_name = cols[1].text_input('Sine filename, ex: filename(n).csv', 'sine')
         sens_name = cols[2].text_input('Sensor filename, ex: filename(n).csv', 'sens')
 
+        my_bar = st.progress(0)
         submitted = st.form_submit_button("Submit")
         if submitted:
             # st.write("uploaded file", uploaded_files)
