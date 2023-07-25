@@ -16,7 +16,7 @@ def get_static_store() -> Dict:
    return {}
 
 def app():
-    global show_chart, show_df, fig
+    global show_chart, show_df, fig, csv_wave_io
 
     if device == "Micsig":
         allMem = 87500
@@ -104,11 +104,14 @@ def app():
             sample = 1000
             step = 360/sample
             sine_x = np.arange(start=0, stop=360, step=step)
-
-            if dfFilterPos['voltage_mV'].max() > abs(dfFilterNeg['voltage_mV'].min()):
-                max_sine = dfFilterPos['voltage_mV'].max() * 1.4
+            dfFilterPos = df[((df['voltage_mV'] > 0) & df['kind'].isin(['sensor']))]
+            dfFilterNeg = df[((df['voltage_mV'] < 0) & df['kind'].isin(['sensor']))]
+            top_pos = dfFilterPos['voltage_mV'].max()
+            top_neg = abs(dfFilterNeg['voltage_mV'].min())
+            if top_pos > top_neg:
+                max_sine = top_pos * 1.4
             else:
-                max_sine = abs(dfFilterNeg['voltage_mV'].min()) * 1.4
+                max_sine = top_neg * 1.4
 
             sine_y = max_sine * (np.sin(2*np.pi*sine_x/Fs))
             for element in sine_x:
@@ -119,12 +122,14 @@ def app():
             df.reset_index(inplace=True, drop=True)
 
             # calibration state
-            charge = df["voltage_mV"].tolist()
-            for element in charge:
+            charge = []
+            volt = df["voltage_mV"].tolist()
+            for element in volt:
                 if element > 0:
                     element = element * cal_m + cal_b
                 else:
                     element = element * cal_m - cal_b
+                charge.append(element)
 
             df_charge = pd.DataFrame(charge, columns =['charge_pC'])
             df_charge.reset_index(inplace=True, drop=True)
@@ -170,13 +175,13 @@ def app():
             print("nNeg: ", nNeg)
             print("nPosCyc: ", nPosCycle)
             print("nNegCyc: ", nNegCycle)
-            dfFilterPos = df[((df['voltage_mV'] > 0) & df['kind'].isin(['sensor']))]
+            
             print("topPos: ", dfFilterPos['voltage_mV'].max())
             print("strDegPos: ", dfFilterPos['deg'].min())
             print("endDegPos: ", dfFilterPos['deg'].max())
             print("kurtPos: ", dfFilterPos['voltage_mV'].kurt())
             print("skewPos: ", dfFilterPos['voltage_mV'].skew())
-            dfFilterNeg = df[((df['voltage_mV'] < 0) & df['kind'].isin(['sensor']))]
+            
             print("topNeg: ", dfFilterNeg['voltage_mV'].min())
             print("strDegNeg: ", dfFilterNeg['deg'].min())
             print("endDegNeg: ", dfFilterNeg['deg'].max())
@@ -206,16 +211,16 @@ def app():
                     ['skew_neg', dfFilterNeg['voltage_mV'].skew(), 'unit']
                 ]
             
-            csv = df.to_csv(index=False)
-            csv_bytes = csv.encode()
-            csv_io = io.BytesIO(csv_bytes)
+            csv_wave = df.to_csv(index=False)
+            csv_bytes = csv_wave.encode()
+            csv_wave_io = io.BytesIO(csv_bytes)
 
-            # filename = "output/0_recap.csv"
-            # with open(filename, 'w') as csvfile:
-            #     csvwriter = csv.writer(csvfile)
-            #     csvwriter.writerow(fields)
-            #     csvwriter.writerows(rows)
-            # show_df = st.dataframe(pd.read_csv(filename))
+            filename = "output/0_recap.csv"
+            with open(filename, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow(fields)
+                csvwriter.writerows(rows)
+            show_df = st.dataframe(pd.read_csv(filename))
             
             
             # shutil.make_archive('proty', 'zip', 'output')
@@ -276,7 +281,9 @@ def main():
         if submitted:
             app()
     
-    # if submitted:
+    if submitted:
+        # st.download_button('Download Zip', f, file_name='proty.zip')   
+        st.download_button(label="Download CSV", data=csv_wave_io, file_name="compile.csv", mime='text/csv') 
     #     with open('proty.zip', 'rb') as f:
     #         st.download_button('Download Zip', f, file_name='proty.zip')
 
