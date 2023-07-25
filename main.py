@@ -26,7 +26,8 @@ def app():
     quarter = cycleMem/4
     numCycle = allMem/cycleMem
 
-    df1 = []
+    lst = []
+    df = pd.DataFrame(lst)
 
     for x in range(1, int(filecouple+1)):
         
