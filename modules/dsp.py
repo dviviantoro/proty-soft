@@ -1,6 +1,6 @@
 import numpy as np
 
-def generate_sine(amplitude = 0.15):
+def generate_sine(amplitude):
     x_axis = np.linspace(0, 360, 360, endpoint=False)
     y_axis = amplitude * np.sin(np.radians(x_axis))
     return np.column_stack((x_axis, y_axis))
@@ -30,6 +30,7 @@ def generate_stream(data):
     return np.column_stack((x_axis, data))
 
 def filter_noise_and_align(source, sensor, max_filter, min_filter, cycle):
+    sensor = sensor * 1000
     filtered_sensor = filter_noise(sensor, max_filter, min_filter)
     aligned_degree = align_degree(source, cycle)
     data_sensor = np.column_stack((aligned_degree, filtered_sensor))
@@ -45,6 +46,7 @@ def filter_degree(dataSensor, degStartPos, degEndPos, degStartNeg, degEndNeg):
     except:
         filteredNeg = dataSensor[(dataSensor[:, 1] < 0)]
     return np.vstack((filteredPos, filteredNeg))
+
 
 # def implement_calibration(data_sensor, a, c):
     

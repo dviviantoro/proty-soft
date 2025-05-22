@@ -73,8 +73,7 @@ def go_process(data):
     keys = ["operator", "title", "oscilloscope", "cycle", "voltage"]
     for i in range(5):
         set_redis(keys[i], data[i])
-    
-    # set_redis("queue", data[i])
+
     ui.navigate.to("/result")
 
 @ui.page('/')

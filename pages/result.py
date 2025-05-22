@@ -3,6 +3,7 @@ import theme
 from nicegui import ui
 from modules.dsp import *
 from modules.dictionary import *
+from zipfile import ZipFile
 import pandas as pd
 import asyncio
 import random
@@ -15,10 +16,12 @@ from modules.sqlite3_interface import sqlite_read_table
 from modules.redis_interface import get_redis
 from modules.util import create_full_summary
 
-# def create_file_and_download():
-def create_csv_from_numpy(target, array):
-    # np.savetxt(buffer, arr, delimiter=",", fmt="%d")
-    np.savetxt(target, array, delimiter=",", fmt="%d")
+def create_csv_buffer(name, array):
+    df = pd.DataFrame(array, columns=['x', 'y'])
+    buffer = io.StringIO()
+    df.to_csv(buffer, index=False)
+    buffer.seek(0)
+    return name, buffer.getvalue().encode('utf-8')  # name and bytes
 
 def result_page() -> None:
     metadata = {}
@@ -33,22 +36,31 @@ def result_page() -> None:
     shared_sensor = np.ndarray((100000,), dtype=np.float64, buffer=shm_sensor.buf)
     copied_sensor = shared_sensor.copy()
 
-    buffer_data_sensor = io.StringIO()
+    # buffer_data_sensor = io.StringIO()
+    buffer_zip = io.BytesIO()
 
     def update_prpd(chart, code, bgn_pos, bgn_neg, cycle):
         if bgn_pos == None : bgn_pos = 0
         if bgn_neg == None : bgn_neg = 0
         data_sensor = filter_noise_and_align(copied_source, copied_sensor, bgn_pos, bgn_neg, cycle)
         data_sensor = filter_degree(data_sensor, degStartPos.value, degEndPos.value, degStartNeg.value, degEndNeg.value)
+        code_sentece, max_abs = create_full_summary(data_sensor)
+        data_sine = generate_sine(amplitude=max_abs*1.4)
+        # print(data_sensor)
 
-        columns = ['time', 'value']
-        df = pd.DataFrame(data_sensor, columns=columns)
-        df.to_csv(buffer_data_sensor, index=False)
-        buffer_data_sensor.seek(0)
+        arrays = {
+            'sensor.csv': data_sensor,
+            'source.csv': data_sine
+        }
+        files = [create_csv_buffer(name, arr) for name, arr in arrays.items()]
         
-        np.savetxt(buffer_data_sensor, data_sensor, delimiter=",", fmt="%.2f")
+        with ZipFile(buffer_zip, 'w') as zip_file:
+            for filename, content in files:
+                zip_file.writestr(filename, content)
+        buffer_zip.seek(0)
 
-        code.set_content(create_full_summary(data_sensor))
+        code.set_content(code_sentece)
+        chart.options['series'][0]['data'] = data_sine
         chart.options['series'][1]['data'] = data_sensor
         chart.update()
 
@@ -66,7 +78,7 @@ def result_page() -> None:
                             ax.plot(x, copied_source, '-g')
                             ax.plot(x, copied_sensor, '-b')
                     with ui.tab_panel(tab_prpd):
-                        data_sine = generate_sine()
+                        data_sine = generate_sine(30)
                         """
                         data_sensor = filter_and_align(copied_source, copied_sensor, 0.005, -0.005)
                         data_sensor[:, 0] += 1
@@ -77,7 +89,7 @@ def result_page() -> None:
 
             with ui.card().classes('no-shadow col-start-9 col-span-4 size-full'):
                 ui.label('Panel Control')
-                summary = ui.code(create_full_summary(copied_sensor)).classes('w-full')
+                summary = ui.code(create_full_summary(copied_sensor)[0]).classes('w-full')
                 with ui.row().classes("w-full place-content-center grid grid-cols-12"):
                     bgn_pos = ui.number(label='Noise Positive in mV', precision=4).props('clearable').classes('col-start-1 col-span-6 size-full')
                     bgn_neg = ui.number(label='Noise Negative in mV', precision=4).props('clearable').classes('col-start-7 col-span-6 size-full')
@@ -92,5 +104,5 @@ def result_page() -> None:
 
                 with ui.row().classes("w-full place-content-center"):
                     ui.button("check", color="#47C483", on_click=lambda: update_prpd(chart_prpd, summary, bgn_pos.value, bgn_neg.value, int(metadata["cycle"])))
-                    ui.button("download", color="#F3C623", on_click=lambda: ui.download.file(buffer_data_sensor))
-                    # ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_data_sensor, 'test.csv'))
+                    # ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue().encode('utf-8'), 'test.csv'))
+                    ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue(), filename='results.zip'))

@@ -35,6 +35,7 @@ def create_full_summary(data_sensor):
     oscilloscope = r.get("oscilloscope")
     cycle = r.get("cycle")
     voltage = r.get("voltage")
+    max_abs = 1
 
     if data_sensor.ndim == 1:
         avg_pos = None
@@ -53,6 +54,11 @@ def create_full_summary(data_sensor):
         avg_neg = np.mean(neg[:, 1])
         max_neg = np.min(neg[:, 1])
         min_neg = np.max(neg[:, 1])
+
+        if max_pos > abs(max_neg):
+            max_abs = max_pos 
+        else:
+            max_abs = abs(max_neg)
 
     sentence = f"""
     metadata = {{
@@ -74,7 +80,7 @@ def create_full_summary(data_sensor):
         }}
     }}
 """
-    return sentence
+    return sentence, max_abs
 
 def insert_tiny(category, data):
     path = f"{json_db_path}/{category}.json"
