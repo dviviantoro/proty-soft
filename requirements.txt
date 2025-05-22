@@ -4,3 +4,4 @@ nicegui==2.16.1
 matplotlib==3.10.1
 pandas==2.2.3
 redis==6.0.0
+tinydb==4.8.2

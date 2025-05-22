@@ -39,4 +39,4 @@ def main_page() -> None:
 all_pages.create()
 
 if __name__ in {'__main__', '__mp_main__'}:
-    ui.run(storage_secret='THIS_NEEDS_TO_BE_CHANGED', favicon="🚀", title="Proty02", show=False)
+    ui.run(storage_secret='THIS_NEEDS_TO_BE_CHANGED', favicon="🚀", title="Proty02", show=False, port=9000)

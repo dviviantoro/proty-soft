@@ -27,8 +27,8 @@ def create_dict_prpd(data_sine, data_sensor):
     dictionary = {
         "tooltip": {"trigger": "item"},
         "legend": {'textStyle': {'color': 'gray'}},
-        "xAxis": {"type": "value", "name": "Deg"},
-        "yAxis": {"type": "value", "name": "Charge (pC)"},
+        "xAxis": {"type": "value", "name": "Deg", "interval": 45, "max": 360},
+        "yAxis": {"type": "value", "name": "Voltage (mv)"},
         "grid": {
             "top": 40,
             "bottom": 40,

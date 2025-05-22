@@ -3,3 +3,5 @@ __pycache__
 .nicegui
 database/
 .env
+.DS_Store
+archives/.DS_Store

@@ -16,11 +16,9 @@ def source_csv_file_handler(e: events.UploadEventArguments):
         shm = shared_memory.SharedMemory(create=True, size=result.nbytes, name="source")
         shared_data = np.ndarray(result.shape, dtype=result.dtype, buffer=shm.buf)
         shared_data[:] = result[:]
-        print(shared_data)
     except Exception as e:
         print(e)
         shared_data[:] = result[:]
-        print(shared_data)
 
 def sensor_csv_file_handler(e: events.UploadEventArguments):
     with StringIO(e.content.read().decode("utf-8")) as f:
@@ -30,14 +28,12 @@ def sensor_csv_file_handler(e: events.UploadEventArguments):
         shm = shared_memory.SharedMemory(create=True, size=result.nbytes, name="sensor")
         shared_data = np.ndarray(result.shape, dtype=result.dtype, buffer=shm.buf)
         shared_data[:] = result[:]
-        print(shared_data)
     except Exception as e:
         print(e)
         shared_data[:] = result[:]
-        print(shared_data)
     
 def check_input(input, stepper):
-    stepper.next() if input else ui.notify('plese input your data', type='warning')
+    stepper.next() if input else ui.notify('please input your data', type='warning')
 
 def generate_option(input_type):
     option = {}
@@ -69,25 +65,20 @@ def check_uploaded_csv(stepper):
     try:
         shared_memory.SharedMemory(name='source')
         shared_memory.SharedMemory(name='sensor')
-        print("datanya ada")
         stepper.next()
     except Exception as e:
-        print("datanya nggak ada")
         ui.notify('plese input your data', type='warning')
 
 def go_process(data):
     keys = ["operator", "title", "oscilloscope", "cycle", "voltage"]
-    for i in range(4):
+    for i in range(5):
         set_redis(keys[i], data[i])
+    
+    # set_redis("queue", data[i])
     ui.navigate.to("/result")
 
 @ui.page('/')
 def content() -> None:
-    last_data = []
-
-        # existing_shm = shared_memory.SharedMemory(name='source')
-        # shared_array = np.ndarray((100000,), dtype=np.float64, buffer=existing_shm.buf)
-
     with ui.element('div').classes('grid-cols-12 absolute-center gap-10'):
         with ui.stepper().props('horizontal') as stepper:
             operator = generate_step(
@@ -149,5 +140,5 @@ def content() -> None:
                         with ui.button(color="#3874c8",on_click=lambda:summary.set_content(create_summary([operator.value,title.value,oscilloscope_option[oscilloscope.value],cycle.value,voltage.value]))):
                             ui.label("Reload Data").style("color: white")
                         with ui.button(color="#47C483", on_click=lambda:go_process([operator.value,title.value,oscilloscope_option[oscilloscope.value],cycle.value,voltage.value])):
-                            ui.label("Go Sampling").style("color: white")
+                            ui.label("Go Charting").style("color: white")
     

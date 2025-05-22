@@ -17,8 +17,6 @@ def align_degree(data, n_wave):
     return aligned_degrees
 
 def filter_noise(data, max, min):
-    print(data)
-    print(max)
     filtered_data = np.where((data > min) & (data < max), np.nan, data)
     return filtered_data
 
@@ -27,15 +25,26 @@ def create_dummy_y(aligned_degrees, amplitude):
     y_values = amplitude * np.sin(radians)
     return y_values
 
-def get_max_charge():
-    print("something")
-
 def generate_stream(data):
     x_axis = np.arange(len(data))
     return np.column_stack((x_axis, data))
 
-def filter_and_align(source, sensor, max_filter, min_filter, cycle):
+def filter_noise_and_align(source, sensor, max_filter, min_filter, cycle):
     filtered_sensor = filter_noise(sensor, max_filter, min_filter)
     aligned_degree = align_degree(source, cycle)
     data_sensor = np.column_stack((aligned_degree, filtered_sensor))
     return data_sensor[~np.isnan(data_sensor).any(axis=1)]
+
+def filter_degree(dataSensor, degStartPos, degEndPos, degStartNeg, degEndNeg):
+    try:
+        filteredPos = dataSensor[(dataSensor[:, 0] >= degStartPos) & (dataSensor[:, 0] <= degEndPos) & (dataSensor[:, 1] > 0)]
+    except:
+        filteredPos = dataSensor[(dataSensor[:, 1] > 0)]
+    try:
+        filteredNeg = dataSensor[(dataSensor[:, 0] >= degStartNeg) & (dataSensor[:, 0] <= degEndNeg) & (dataSensor[:, 1] < 0)]
+    except:
+        filteredNeg = dataSensor[(dataSensor[:, 1] < 0)]
+    return np.vstack((filteredPos, filteredNeg))
+
+# def implement_calibration(data_sensor, a, c):
+    

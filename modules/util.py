@@ -2,6 +2,7 @@ import redis
 from tinydb import TinyDB, Query
 # from redis_interface import get_redis
 from datetime import datetime
+import numpy as np
 
 r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 json_db_path = "/Users/deny/proty02/assets/db"
@@ -35,12 +36,23 @@ def create_full_summary(data_sensor):
     cycle = r.get("cycle")
     voltage = r.get("voltage")
 
-    avg_pos = data_sensor[0]
-    max_pos = data_sensor[0]
-    min_pos = data_sensor[0]
-    avg_neg = data_sensor[0]
-    max_neg = data_sensor[0]
-    min_neg = data_sensor[0]
+    if data_sensor.ndim == 1:
+        avg_pos = None
+        max_pos = None
+        min_pos = None
+        avg_neg = None
+        max_neg = None
+        min_neg = None
+    else:
+        pos = data_sensor[data_sensor[:, 1] > 0]
+        neg = data_sensor[data_sensor[:, 1] < 0]
+
+        avg_pos = np.mean(pos[:, 1])
+        max_pos = np.max(pos[:, 1])
+        min_pos = np.min(pos[:, 1])
+        avg_neg = np.mean(neg[:, 1])
+        max_neg = np.min(neg[:, 1])
+        min_neg = np.max(neg[:, 1])
 
     sentence = f"""
     metadata = {{
