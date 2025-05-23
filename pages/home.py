@@ -140,4 +140,7 @@ def content() -> None:
                             ui.label("Reload Data").style("color: white")
                         with ui.button(color="#47C483", on_click=lambda:go_process([operator.value,title.value,oscilloscope_option[oscilloscope.value],cycle.value,voltage.value])):
                             ui.label("Go Charting").style("color: white")
+            
+    with ui.page_sticky(x_offset=18, y_offset=18):
+        ui.button(icon='sms', on_click=lambda: ui.navigate.to('https://wa.me/6285741311479')).props('fab color=green')
     

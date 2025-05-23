@@ -106,5 +106,6 @@ def result_page() -> None:
 
                 with ui.row().classes("w-full place-content-center"):
                     ui.button("check", color="#47C483", on_click=lambda: update_prpd(chart_prpd, summary))
-                    # ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue().encode('utf-8'), 'test.csv'))
                     ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue(), filename=f'proty_result_{metadata["title"]}.zip'))
+    with ui.page_sticky(x_offset=18, y_offset=18):
+        ui.button(icon='sms', on_click=lambda: ui.navigate.to('https://wa.me/6285741311479')).props('fab color=green')

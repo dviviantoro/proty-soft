@@ -8,7 +8,7 @@ load_dotenv()
 cwd = os.getenv('CWD')
 
 # in reality users passwords would obviously need to be hashed
-passwords = {'user1': 'pass1', 'user2': 'pass2'}
+passwords = {'proty': 'tegangantinggi', 'user2': 'pass2'}
 
 # app.add_static_files(cwd + '/assets', cwd + '/assets')
 # app.add_static_files(f'{cwd}/assets', f'{cwd}/assets')
