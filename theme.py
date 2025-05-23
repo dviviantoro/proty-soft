@@ -26,7 +26,6 @@ def frame(my_head: str, my_foot: str):
     
     with ui.header().classes(replace='row items-center').style('display: flex; justify-content: space-between; width: 100%; background-color: #3874c8'):
         with ui.row().classes('items-center'):
-            # ui.button(icon='photo_library', on_click=lambda:ui.navigate.back()).props('flat color=white')
             with ui.button(on_click=lambda:ui.navigate.back(), color="clear").props("flat"):
                 ui.image("/Users/deny/proty02/assets/logo_proty.png").classes('rounded-full w-10 h-10')
 
@@ -43,7 +42,7 @@ def frame(my_head: str, my_foot: str):
         # ui.label('FOOTER')
         with ui.row().style('display: flex; justify-content: space-between; width: 100%;'):
             ui.label(my_foot)
-            ui.label("v25.2")
+            ui.label("Tap message button for ideas and open discussion")
 
     # with ui.page_sticky(x_offset=20, y_offset=20):
     #     ui.button(on_click=lambda:ui.navigate.to('/passkey_page'), icon='tag').props('fab color=blue-5').set_visibility(passkey_bool)

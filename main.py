@@ -33,7 +33,7 @@ def main_page() -> None:
         app.storage.user.clear()
         ui.navigate.to('/login')
 
-    with theme.frame("Proty, the next partial discharge watcher", 'Tab button above to start!'):
+    with theme.frame("Proty-Soft, Phase Resolved Partial Discharge Auto-Charts", 'Version 03.25.1'):
         home_page.content()
 
 all_pages.create()
