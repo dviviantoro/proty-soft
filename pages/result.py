@@ -6,7 +6,7 @@ from modules.dictionary import *
 from zipfile import ZipFile
 import pandas as pd
 import asyncio
-import random
+import json
 from datetime import datetime
 import os
 import sys
@@ -14,7 +14,7 @@ from multiprocessing import shared_memory
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))) 
 from modules.sqlite3_interface import sqlite_read_table
 from modules.redis_interface import get_redis
-from modules.util import create_full_summary
+from modules.util import create_full_summary, create_matplotlib
 
 def create_csv_buffer(name, array):
     df = pd.DataFrame(array, columns=['x', 'y'])
@@ -36,7 +36,6 @@ def result_page() -> None:
     shared_sensor = np.ndarray((100000,), dtype=np.float64, buffer=shm_sensor.buf)
     copied_sensor = shared_sensor.copy()
 
-    # buffer_data_sensor = io.StringIO()
     buffer_zip = io.BytesIO()
 
     def update_prpd(chart, code):
@@ -48,10 +47,12 @@ def result_page() -> None:
         data_sensor = filter_noise_and_align(copied_source, copied_sensor, bgn_pos_val, bgn_neg_val, int(metadata["cycle"]))
         data_sensor = filter_degree(data_sensor, degStartPos.value, degEndPos.value, degStartNeg.value, degEndNeg.value)
         data_sensor = apply_calibration(data_sensor, a.value, c.value)
-        
 
-        code_sentece, max_abs = create_full_summary(data_sensor)
+        code_sentece, json_sentence, max_abs = create_full_summary(data_sensor)
         data_sine = generate_sine(amplitude=max_abs*1.4)
+
+        buffer_metadata = io.StringIO()
+        json.dump(json_sentence, buffer_metadata)
 
         arrays = {
             'sensor.csv': data_sensor,
@@ -62,6 +63,8 @@ def result_page() -> None:
         with ZipFile(buffer_zip, 'w') as zip_file:
             for filename, content in files:
                 zip_file.writestr(filename, content)
+            zip_file.writestr("chart.jpg", create_matplotlib(data_sine, data_sensor, metadata["cycle"], metadata["voltage"]))
+            zip_file.writestr("metadata.json", buffer_metadata.getvalue())
         buffer_zip.seek(0)
 
         code.set_content(code_sentece)
@@ -84,12 +87,6 @@ def result_page() -> None:
                             ax.plot(x, copied_sensor, '-b')
                     with ui.tab_panel(tab_prpd):
                         data_sine = generate_sine(30)
-                        """
-                        data_sensor = filter_and_align(copied_source, copied_sensor, 0.005, -0.005)
-                        data_sensor[:, 0] += 1
-                        pos = data_sensor[data_sensor[:, 1] > 0]
-                        neg = data_sensor[data_sensor[:, 1] < 0]
-                        """
                         chart_prpd = ui.echart(options=create_dict_prpd(data_sine, [])).classes('h-[640px] w-full')
 
             with ui.card().classes('no-shadow col-start-9 col-span-4 size-full'):
@@ -110,4 +107,4 @@ def result_page() -> None:
                 with ui.row().classes("w-full place-content-center"):
                     ui.button("check", color="#47C483", on_click=lambda: update_prpd(chart_prpd, summary))
                     # ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue().encode('utf-8'), 'test.csv'))
-                    ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue(), filename='results.zip'))
+                    ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue(), filename=f'proty_result_{metadata["title"]}.zip'))
