@@ -47,6 +47,11 @@ def filter_degree(dataSensor, degStartPos, degEndPos, degStartNeg, degEndNeg):
         filteredNeg = dataSensor[(dataSensor[:, 1] < 0)]
     return np.vstack((filteredPos, filteredNeg))
 
-
-# def implement_calibration(data_sensor, a, c):
+def apply_calibration(data_sensor, a, c):
+    try:
+        y = data_sensor[:, 1]
+        data_sensor[:, 1] = np.where(y >= 0, y * a + c, y * a - c)
+    except Exception as e:
+        print(e)
+    return data_sensor
     

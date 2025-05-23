@@ -39,14 +39,19 @@ def result_page() -> None:
     # buffer_data_sensor = io.StringIO()
     buffer_zip = io.BytesIO()
 
-    def update_prpd(chart, code, bgn_pos, bgn_neg, cycle):
-        if bgn_pos == None : bgn_pos = 0
-        if bgn_neg == None : bgn_neg = 0
-        data_sensor = filter_noise_and_align(copied_source, copied_sensor, bgn_pos, bgn_neg, cycle)
+    def update_prpd(chart, code):
+        bgn_pos_val = bgn_pos.value 
+        bgn_neg_val = bgn_neg.value 
+
+        if bgn_pos_val == None : bgn_pos_val = 0
+        if bgn_neg_val == None : bgn_neg_val = 0
+        data_sensor = filter_noise_and_align(copied_source, copied_sensor, bgn_pos_val, bgn_neg_val, int(metadata["cycle"]))
         data_sensor = filter_degree(data_sensor, degStartPos.value, degEndPos.value, degStartNeg.value, degEndNeg.value)
+        data_sensor = apply_calibration(data_sensor, a.value, c.value)
+        
+
         code_sentece, max_abs = create_full_summary(data_sensor)
         data_sine = generate_sine(amplitude=max_abs*1.4)
-        # print(data_sensor)
 
         arrays = {
             'sensor.csv': data_sensor,
@@ -103,6 +108,6 @@ def result_page() -> None:
                     c = ui.number(label='Calibration (C)').classes('col-start-7 col-span-4 size-full')
 
                 with ui.row().classes("w-full place-content-center"):
-                    ui.button("check", color="#47C483", on_click=lambda: update_prpd(chart_prpd, summary, bgn_pos.value, bgn_neg.value, int(metadata["cycle"])))
+                    ui.button("check", color="#47C483", on_click=lambda: update_prpd(chart_prpd, summary))
                     # ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue().encode('utf-8'), 'test.csv'))
                     ui.button("download", color="#F3C623", on_click=lambda: ui.download.content(buffer_zip.getvalue(), filename='results.zip'))
